@@ -1,6 +1,6 @@
 
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 // Fix: Removed non-exported type `VideosOperation`.
 import { getAiClient, fileToBase64 } from '../services/geminiService';
 
@@ -22,6 +22,8 @@ export const VideoPanel: React.FC = () => {
     const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [apiKeyReady, setApiKeyReady] = useState(false);
+    const [playbackRate, setPlaybackRate] = useState(1);
+    const videoRef = useRef<HTMLVideoElement>(null);
 
     const checkApiKey = useCallback(async () => {
         if(window.aistudio && await window.aistudio.hasSelectedApiKey()) {
@@ -49,6 +51,13 @@ export const VideoPanel: React.FC = () => {
         }
         return () => clearInterval(interval);
     }, [isLoading]);
+
+    useEffect(() => {
+        if (videoRef.current) {
+            videoRef.current.playbackRate = playbackRate;
+        }
+    }, [playbackRate, generatedVideoUrl]);
+
 
     const handleSelectKey = async () => {
         if (window.aistudio) {
@@ -202,10 +211,30 @@ export const VideoPanel: React.FC = () => {
                     {generatedVideoUrl && (
                          <div className="text-center">
                              <h3 className="text-2xl font-semibold mb-4 text-white">Your masterpiece is ready!</h3>
-                             <video src={generatedVideoUrl} controls autoPlay loop className="w-full rounded-lg shadow-2xl shadow-black/50"></video>
+                             <video ref={videoRef} src={generatedVideoUrl} controls autoPlay loop className="w-full rounded-lg shadow-2xl shadow-black/50"></video>
+                             
+                             <div className="mt-4 flex items-center justify-center gap-4">
+                                <span className="text-sm font-medium text-slate-400">Playback Speed:</span>
+                                <div className="flex items-center gap-2">
+                                    {[0.5, 1, 1.5, 2].map((rate) => (
+                                        <button
+                                            key={rate}
+                                            onClick={() => setPlaybackRate(rate)}
+                                            className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+                                                playbackRate === rate
+                                                    ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white'
+                                                    : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+                                            }`}
+                                        >
+                                            {rate}x
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                             
                              <button
                                 onClick={handleDownloadVideo}
-                                className="mt-4 bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-900 font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-all transform hover:scale-105"
+                                className="mt-6 bg-gradient-to-r from-yellow-400 to-amber-500 text-slate-900 font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-all transform hover:scale-105"
                              >
                                 Download Video
                              </button>
