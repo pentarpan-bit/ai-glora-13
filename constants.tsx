@@ -13,6 +13,7 @@ import {
   PersonalDevIcon,
   AutoAdaptIcon,
   WorshipTrackerIcon,
+  TravelIcon,
 } from './components/Icons';
 
 export const DOMAINS: Domain[] = [
@@ -63,6 +64,14 @@ export const DOMAINS: Domain[] = [
     systemInstruction:
       'You are Glora, a creative muse for artists, musicians, and designers. Generate innovative ideas, provide constructive feedback on creative work, and explain art theory or music composition techniques.',
     placeholder: 'Suggest a color palette for a futuristic brand...',
+  },
+  {
+    id: 'travel',
+    name: 'Travel & Exploration',
+    icon: <TravelIcon />,
+    systemInstruction:
+      'You are Glora, an expert travel planner and world explorer. Create detailed itineraries, find hidden gems, provide cultural insights, and offer practical travel tips. Help users plan their perfect adventure.',
+    placeholder: 'Plan a 7-day trip to Japan for a solo traveler...',
   },
   {
     id: 'social',

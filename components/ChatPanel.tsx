@@ -7,7 +7,7 @@ import type { Domain, ChatMessage, GroundingChunk } from '../types';
 import { Role } from '../types';
 import { getAiClient, fileToBase64 } from '../services/geminiService';
 import Markdown from 'react-markdown';
-import { MicrophoneIcon } from './Icons';
+import { MicrophoneIcon, ProModeIcon } from './Icons';
 
 interface ChatPanelProps {
   domain: Domain;
@@ -30,6 +30,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ domain }) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [chat, setChat] = useState<Chat | null>(null);
   const [groundingChunks, setGroundingChunks] = useState<GroundingChunk[]>([]);
+  const [isProMode, setIsProMode] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,16 +40,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ domain }) => {
   useEffect(() => {
     const ai = getAiClient();
     const newChat = ai.chats.create({
-      model: 'gemini-2.5-flash',
+      model: isProMode ? 'gemini-2.5-pro' : 'gemini-2.5-flash',
       config: {
         systemInstruction: domain.systemInstruction,
-        tools: [{googleSearch: {}}]
+        tools: isProMode ? undefined : [{googleSearch: {}}],
+        ...(isProMode && { thinkingConfig: { thinkingBudget: 32768 } }),
       },
     });
     setChat(newChat);
     setMessages([]);
     setGroundingChunks([]);
-  }, [domain]);
+  }, [domain, isProMode]);
   
   useEffect(() => {
     // Fix: Cast window to any to avoid property does not exist error for SpeechRecognition.
@@ -123,9 +125,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ domain }) => {
             const textPart = { text: input };
             
             const response = await ai.models.generateContent({
-                model: 'gemini-2.5-flash',
+                model: isProMode ? 'gemini-2.5-pro' : 'gemini-2.5-flash',
                 contents: { parts: [imagePart, textPart] },
-                config: { systemInstruction: domain.systemInstruction },
+                config: { 
+                  systemInstruction: domain.systemInstruction,
+                  ...(isProMode && { thinkingConfig: { thinkingBudget: 32768 } }),
+                },
             });
 
             const modelMessage: ChatMessage = {
@@ -170,7 +175,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ domain }) => {
     } finally {
         setIsLoading(false);
     }
-  }, [input, image, imagePreview, chat, domain.systemInstruction, isListening]);
+  }, [input, image, imagePreview, chat, domain.systemInstruction, isListening, isProMode]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -257,6 +262,19 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ domain }) => {
           <button onClick={handleSendMessage} disabled={isLoading || (!input.trim() && !image)} className="p-2 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 hover:opacity-90 disabled:bg-slate-600 disabled:cursor-not-allowed transition-colors text-white">
              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
           </button>
+        </div>
+        <div className="flex justify-end items-center mt-2 pt-2 border-t border-slate-700/50">
+            <div
+                className="flex items-center gap-2 text-sm text-slate-400 cursor-pointer group"
+                title="For complex tasks, utilizes a more powerful model with enhanced reasoning. Toggling will start a new chat."
+                onClick={() => setIsProMode(!isProMode)}
+            >
+                <ProModeIcon />
+                <span className="group-hover:text-white transition-colors">Pro Mode</span>
+                <div className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isProMode ? 'bg-cyan-500' : 'bg-slate-600'}`}>
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isProMode ? 'translate-x-6' : 'translate-x-1'}`} />
+                </div>
+            </div>
         </div>
       </div>
     </div>
