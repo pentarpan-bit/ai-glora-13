@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Copy of Glora Multifunctional AI",
+  "description": "An elegant, futuristic AI assistant with vast capabilities across business, health, technology, arts, and more. Interact via text, voice, and image with a super-intellectual AI designed to analyze, strategize, and assist in all aspects of life.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
